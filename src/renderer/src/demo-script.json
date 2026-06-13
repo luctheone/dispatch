@@ -1,0 +1,7 @@
+[
+  "Make a folder on my Desktop called osaka-trip.",
+  "Inside the Desktop folder osaka-trip, write me a packing list for a week in Tokyo as a markdown file named packing-list.md.",
+  "AMENDMENT to your current/previous task: the trip is Osaka, not Tokyo — change every Tokyo reference in the packing list to Osaka. Apply this even if you already started or finished.",
+  "Check on the live web whether the SMU Li Ka Shing library in Singapore is open right now, and add today's opening hours to packing-list.md in the osaka-trip folder.",
+  "Add this weekend's Osaka weather forecast to packing-list.md, then open the osaka-trip folder in Finder and open packing-list.md."
+]

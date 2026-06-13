@@ -1,0 +1,61 @@
+{
+  "name": "claude-dispatch",
+  "productName": "Claude Dispatch",
+  "description": "Speak. It's already doing it. A desktop agent that acts while you talk.",
+  "version": "0.1.0",
+  "private": true,
+  "author": "Lucas",
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "make-app": "bash build/make-app.sh"
+  },
+  "build": {
+    "appId": "com.dispatch.app",
+    "productName": "Claude Dispatch",
+    "asar": false,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**",
+      "node_modules/**",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "dir"
+      ],
+      "identity": null,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Claude Dispatch listens to your voice so it can act on what you say.",
+        "NSCameraUsageDescription": "Claude Dispatch uses the camera for vision-based dispatches.",
+        "NSAppleEventsUsageDescription": "Claude Dispatch sends Apple Events to control apps on your behalf."
+      }
+    }
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.175",
+    "@google/genai": "^2.8.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^42.4.0",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^4.0.0",
+    "tailwindcss": "^4.2.0",
+    "typescript": "^5.7.3",
+    "vite": "^7.0.0"
+  }
+}
