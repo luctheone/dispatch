@@ -61,6 +61,12 @@ export class AgentRunner {
     this.opts = opts
   }
 
+  /** Claim a unique, monotonically-increasing card id (shared with other lanes
+   *  like computer-use so every card on the board has a distinct key). */
+  claimId(): number {
+    return this.nextId++
+  }
+
   /** Start the streaming session loop. */
   start() {
     if (this.running) return

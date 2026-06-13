@@ -15,6 +15,7 @@ import {
 } from "../shared/types"
 import { AgentRunner } from "./agent"
 import { startVisionServer } from "./vision"
+import { runComputerTask } from "./computer-use"
 
 // Load dispatch/.env (GEMINI_API_KEY etc.) without a dotenv dependency. A
 // packaged .app has neither app.getAppPath()/.env nor a useful cwd, so we also
@@ -205,19 +206,32 @@ app.whenReady().then(async () => {
 
   ipcMain.on(IPC.send, (_e, text: string, source?: DispatchSource) => runner?.dispatch(text, source))
   ipcMain.on(IPC.runDirect, (_e, action: DirectAction) => runner?.runDirect(action))
+  ipcMain.on(IPC.computer, (_e, instruction: string) => {
+    if (!runner) return
+    const d = screen.getPrimaryDisplay()
+    void runComputerTask(instruction, {
+      onEvent: sendToHud,
+      logicalWidth: d.size.width,
+      logicalHeight: d.size.height,
+      scaleFactor: d.scaleFactor,
+      model: process.env.DISPATCH_COMPUTER_MODEL || undefined,
+      nextId: () => runner!.claimId(),
+    })
+  })
   ipcMain.on(IPC.interrupt, () => void runner?.interrupt())
   ipcMain.on(IPC.cancelLast, () => runner?.cancelLast())
   // Permissions onboarding. Packaged + signed, every prompt below is attributed
   // to "Claude Dispatch" itself (not the launcher). No prompt fires at boot.
   ipcMain.handle(IPC.getPermissions, (): PermissionStatus => {
     if (process.platform !== "darwin") {
-      return { microphone: "granted", screen: "granted", automation: "granted" }
+      return { microphone: "granted", screen: "granted", accessibility: "granted", automation: "granted" }
     }
     // Electron's status strings are a superset of PermissionState's mic/screen
-    // values; automation has no query API so it's always "will-prompt".
+    // values; accessibility is a boolean; automation has no query API.
     return {
       microphone: systemPreferences.getMediaAccessStatus("microphone") as PermissionState,
       screen: systemPreferences.getMediaAccessStatus("screen") as PermissionState,
+      accessibility: systemPreferences.isTrustedAccessibilityClient(false) ? "granted" : "denied",
       automation: "will-prompt",
     }
   })
@@ -240,6 +254,16 @@ app.whenReady().then(async () => {
     } catch {
       // Denied/cancelled — onboarding re-reads status via getPermissions.
     }
+  })
+  ipcMain.handle(IPC.requestAccessibility, async (): Promise<boolean> => {
+    if (process.platform !== "darwin") return true
+    // Passing true pops the system "grant Accessibility" prompt (and adds the app
+    // to the list). The grant takes effect on next launch; also open the pane.
+    const trusted = systemPreferences.isTrustedAccessibilityClient(true)
+    if (!trusted) {
+      void shell.openExternal("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+    }
+    return trusted
   })
   ipcMain.handle(IPC.openScreenSettings, () => {
     void shell.openExternal("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")

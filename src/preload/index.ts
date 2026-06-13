@@ -13,6 +13,7 @@ import {
 const api: DispatchApi = {
   send: (text: string, source?: DispatchSource) => ipcRenderer.send(IPC.send, text, source),
   runDirect: (action: DirectAction) => ipcRenderer.send(IPC.runDirect, action),
+  computerTask: (instruction: string) => ipcRenderer.send(IPC.computer, instruction),
   interrupt: () => ipcRenderer.send(IPC.interrupt),
   cancelLast: () => ipcRenderer.send(IPC.cancelLast),
   onAgentEvent: (cb: (e: AgentEvent) => void) => {
@@ -25,6 +26,7 @@ const api: DispatchApi = {
   getPermissions: (): Promise<PermissionStatus> => ipcRenderer.invoke(IPC.getPermissions),
   requestMic: (): Promise<boolean> => ipcRenderer.invoke(IPC.requestMic),
   requestScreen: (): Promise<void> => ipcRenderer.invoke(IPC.requestScreen),
+  requestAccessibility: (): Promise<boolean> => ipcRenderer.invoke(IPC.requestAccessibility),
   openScreenSettings: () => void ipcRenderer.invoke(IPC.openScreenSettings),
   openAutomationSettings: () => void ipcRenderer.invoke(IPC.openAutomationSettings),
 }

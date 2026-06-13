@@ -36,13 +36,19 @@ const ROWS: EyeRow[] = [
   {
     key: "screen",
     title: "Screen Recording",
-    blurb: "Only for the watch feature — lets Dispatch see your screen (VideoDB) and act on what it sees.",
+    blurb: "For computer-use (and VideoDB) — lets Dispatch SEE your screen to click the right things. Restart the app after enabling.",
+    required: false,
+  },
+  {
+    key: "accessibility",
+    title: "Accessibility",
+    blurb: "For computer-use — lets Dispatch move the cursor, click, and type for you. Grant once; restart the app after.",
     required: false,
   },
   {
     key: "automation",
     title: "Automation",
-    blurb: "Only for app control — lets Dispatch open and drive other apps. Prompts the first time it's needed.",
+    blurb: "Only for scripting specific apps. Prompts the first time it's needed.",
     required: false,
   },
 ]
@@ -64,9 +70,9 @@ export default function Onboarding({ status, onRefresh, onDismiss, onMicGranted 
   const [wasGranted, setWasGranted] = useState(status?.microphone === "granted")
 
   const mic = status?.microphone ?? "unknown"
-  const screen = status?.screen ?? "unknown"
-  const automation = status?.automation ?? "will-prompt"
   const micGranted = mic === "granted"
+  const stateOf = (key: keyof PermissionStatus): PermissionState =>
+    status?.[key] ?? (key === "automation" ? "will-prompt" : "unknown")
 
   // Re-poll on window focus — the System Settings round-trip lands here.
   useEffect(() => {
@@ -105,8 +111,18 @@ export default function Onboarding({ status, onRefresh, onDismiss, onMicGranted 
     }
   }, [onRefresh])
 
+  const requestAccessibility = useCallback(async () => {
+    setBusy("accessibility")
+    try {
+      await window.dispatch.requestAccessibility()
+    } finally {
+      onRefresh()
+      setBusy(null)
+    }
+  }, [onRefresh])
+
   function action(key: keyof PermissionStatus): React.ReactNode {
-    const state = key === "microphone" ? mic : key === "screen" ? screen : automation
+    const state = stateOf(key)
 
     if (key === "microphone") {
       if (state === "granted") return null
@@ -142,6 +158,21 @@ export default function Onboarding({ status, onRefresh, onDismiss, onMicGranted 
       )
     }
 
+    if (key === "accessibility") {
+      if (state === "granted") return null
+      return (
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            onClick={requestAccessibility}
+            disabled={busy === "accessibility"}
+            className="rounded-lg border border-zinc-600 px-3 py-1.5 text-sm font-medium text-zinc-200 transition-colors hover:border-zinc-400 hover:text-white disabled:opacity-60"
+          >
+            {busy === "accessibility" ? "Prompting…" : "Grant"}
+          </button>
+        </div>
+      )
+    }
+
     // automation
     return (
       <button
@@ -170,7 +201,7 @@ export default function Onboarding({ status, onRefresh, onDismiss, onMicGranted 
 
         <div className="my-5 space-y-2.5">
           {ROWS.map((row) => {
-            const state = row.key === "microphone" ? mic : row.key === "screen" ? screen : automation
+            const state = stateOf(row.key)
             return (
               <div
                 key={row.key}

@@ -48,7 +48,8 @@ export type PermissionState = "granted" | "denied" | "restricted" | "not-determi
 
 export interface PermissionStatus {
   microphone: PermissionState
-  screen: PermissionState
+  screen: PermissionState // computer-use eyes (screencapture) + VideoDB
+  accessibility: PermissionState // computer-use hands (cliclick mouse/keyboard)
   automation: PermissionState // always "will-prompt" on macOS (no status API), "granted" off-darwin
 }
 
@@ -57,6 +58,8 @@ export interface DispatchApi {
   send(text: string, source?: DispatchSource): void
   // Fast lane: run a deterministic action immediately, no agent round-trip.
   runDirect(action: DirectAction): void
+  // Computer-use lane: take over cursor+screen to do a click/type GUI task.
+  computerTask(instruction: string): void
   interrupt(): void
   cancelLast(): void
   onAgentEvent(cb: (e: AgentEvent) => void): () => void
@@ -68,6 +71,7 @@ export interface DispatchApi {
   getPermissions(): Promise<PermissionStatus>
   requestMic(): Promise<boolean> // askForMediaAccess('microphone')
   requestScreen(): Promise<void> // triggers the screen-recording prompt (desktopCapturer probe)
+  requestAccessibility(): Promise<boolean> // prompts/opens the Accessibility grant (for cliclick)
   openScreenSettings(): void // Privacy → Screen Recording pane
   openAutomationSettings(): void // Privacy → Automation pane
 }
@@ -95,6 +99,7 @@ export interface VoiceApi {
 export const IPC = {
   send: "dispatch:send",
   runDirect: "dispatch:run-direct",
+  computer: "dispatch:computer",
   interrupt: "dispatch:interrupt",
   cancelLast: "dispatch:cancel-last",
   config: "dispatch:config",
@@ -102,6 +107,7 @@ export const IPC = {
   getPermissions: "dispatch:get-permissions",
   requestMic: "dispatch:request-mic",
   requestScreen: "dispatch:request-screen",
+  requestAccessibility: "dispatch:request-accessibility",
   openScreenSettings: "dispatch:open-screen-settings",
   openAutomationSettings: "dispatch:open-automation-settings",
   agentEvent: "agent:event",

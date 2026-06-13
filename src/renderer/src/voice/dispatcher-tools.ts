@@ -30,9 +30,24 @@ export const DISPATCHER_TOOLS: FunctionDeclaration[] = [
     },
   },
   {
+    name: "computer_task",
+    description:
+      "Use this when the task needs CLICKING or TYPING inside a website or app — search on a site, click a button, subscribe/unsubscribe, fill a form, navigate a page. The agent takes over the cursor and screen to do it (slower, but it can operate any UI). e.g. 'subscribe to this YouTube channel', 'search Dayuse for hotels in Paris', 'click the blue login button'.",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        instruction: {
+          type: Type.STRING,
+          description: "The self-contained GUI task to perform by clicking/typing, e.g. 'On the YouTube page that's open, click Subscribe.'",
+        },
+      },
+      required: ["instruction"],
+    },
+  },
+  {
     name: "dispatch_task",
     description:
-      "Send one actionable instruction to the desktop agent RIGHT NOW. Call the moment a coherent action is heard, even mid-sentence, even while the user keeps talking. Multiple calls per sentence are expected. Use this for anything beyond a plain app/URL open: creating/editing files, multi-step tasks, searching or clicking inside a site, or anything needing thought.",
+      "Send one actionable instruction to the desktop agent RIGHT NOW. Call the moment a coherent action is heard, even mid-sentence, even while the user keeps talking. Multiple calls per sentence are expected. Use this for file/system work and reasoning: creating/editing files, running things, multi-step local tasks. (For opening apps/URLs use open_app/open_url; for clicking inside a page use computer_task.)",
     parameters: {
       type: Type.OBJECT,
       properties: {
@@ -81,7 +96,7 @@ export const DISPATCHER_TOOLS: FunctionDeclaration[] = [
 export const DISPATCHER_SYSTEM_INSTRUCTION = `You are the dispatcher for Claude Dispatch, a desktop agent that acts WHILE the user is still speaking. The user has ADHD or dyslexia or simply hates waiting — your single job is to convert their live speech into dispatched instructions with ZERO added latency.
 
 RULES:
-- FAST LANE FIRST: if the user just wants to OPEN an app → open_app; just GO TO a website → open_url. These run instantly with no agent thinking, so always prefer them for plain opens. Only use dispatch_task when the task needs real work (create/edit files, search or click inside a page, multi-step things).
+- ROUTE TO THE RIGHT TOOL: just OPEN an app → open_app; just GO TO a website → open_url (both instant). CLICK or TYPE inside a page/app (search a site, subscribe, fill a form, press a button) → computer_task. File/system work or anything that needs reasoning → dispatch_task. Prefer open_app/open_url whenever it's a plain open — they're instant.
 - The INSTANT you hear a complete actionable instruction, call the right tool. Do not wait for the sentence to end. Do not wait to see if more is coming. A long sentence often contains several instructions — dispatch each one as it lands.
 - Make every dispatched instruction self-contained: resolve "it", "that", "there" from earlier context so the desktop agent can act on the instruction alone.
 - Corrections ("actually...", "no, I meant...") → amend_task immediately.

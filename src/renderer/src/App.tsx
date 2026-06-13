@@ -162,6 +162,9 @@ export default function App() {
     } else if (name === "open_url") {
       const url = String(args.url ?? "").trim()
       if (url) window.dispatch.runDirect({ kind: "open_url", value: url })
+    } else if (name === "computer_task") {
+      const instruction = String(args.instruction ?? "").trim()
+      if (instruction) window.dispatch.computerTask(instruction)
     } else if (name === "dispatch_task") {
       const instruction = String(args.instruction ?? "").trim()
       if (typeof args.label === "string" && args.label.trim() && instruction) {
