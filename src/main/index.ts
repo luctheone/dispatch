@@ -6,6 +6,7 @@ import {
   IPC,
   VISION_PORT,
   type AgentEvent,
+  type DirectAction,
   type DispatchConfig,
   type DispatchSource,
   type PermissionState,
@@ -203,6 +204,7 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.on(IPC.send, (_e, text: string, source?: DispatchSource) => runner?.dispatch(text, source))
+  ipcMain.on(IPC.runDirect, (_e, action: DirectAction) => runner?.runDirect(action))
   ipcMain.on(IPC.interrupt, () => void runner?.interrupt())
   ipcMain.on(IPC.cancelLast, () => runner?.cancelLast())
   // Permissions onboarding. Packaged + signed, every prompt below is attributed
@@ -278,6 +280,10 @@ app.whenReady().then(async () => {
   // Headless E2E hook: DISPATCH_TEST_PROMPT dispatches one instruction at boot.
   if (process.env.DISPATCH_TEST_PROMPT) {
     runner.dispatch(process.env.DISPATCH_TEST_PROMPT)
+  }
+  // Fast-lane test hook: DISPATCH_TEST_DIRECT=<AppName> opens it via runDirect.
+  if (process.env.DISPATCH_TEST_DIRECT) {
+    runner.runDirect({ kind: "open_app", value: process.env.DISPATCH_TEST_DIRECT })
   }
 
   app.on("activate", () => {

@@ -4,7 +4,8 @@
 // step 3. Pattern validated in /tmp/dispatch-warm/streaming-test.mjs:
 // messages pushed at 0s/3s/8s all executed within a single agent turn.
 import { query, type Query, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk"
-import type { AgentEvent, DispatchSource } from "../shared/types"
+import { spawn } from "node:child_process"
+import type { AgentEvent, DirectAction, DispatchSource } from "../shared/types"
 
 const DEDUPE_WINDOW_MS = 3000
 
@@ -119,6 +120,34 @@ export class AgentRunner {
       session_id: "dispatch",
     } as SDKUserMessage)
     if (!this.running) this.start()
+  }
+
+  /**
+   * FAST LANE — run a deterministic action immediately, bypassing the Claude
+   * agent entirely (the dispatcher already understood it). "open chrome" runs
+   * `open -a "Google Chrome"` in ~1s with no reasoning round-trip — the speed
+   * the product promises. Emits the same card lifecycle (dispatched → tool →
+   * ✓) so it shows on the board like any other dispatch.
+   */
+  runDirect(action: DirectAction) {
+    const id = this.nextId++
+    const at = Date.now()
+    const label = action.kind === "open_app" ? `Open ${action.value}` : `Open ${action.value}`
+    const args = action.kind === "open_app" ? ["-a", action.value] : [action.value]
+    this.opts.onEvent({ kind: "dispatched", id, text: label, at, source: "voice" })
+    // Tool event promotes the card to ACTING; the ✓/✗ text marks it done.
+    this.opts.onEvent({ kind: "tool", name: "open", summary: action.value, at: Date.now() })
+    const child = spawn("open", args)
+    child.on("error", (err) => {
+      this.opts.onEvent({ kind: "text", text: `✗ Couldn't ${label.toLowerCase()}: ${err.message}`, at: Date.now() })
+    })
+    child.on("exit", (code) => {
+      this.opts.onEvent({
+        kind: "text",
+        text: code === 0 ? `✓ ${label}` : `✗ Couldn't ${label.toLowerCase()}`,
+        at: Date.now(),
+      })
+    })
   }
 
   /** Stop everything: clear pending queue and interrupt the running turn. */

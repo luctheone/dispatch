@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from "electron"
 import {
   IPC,
   type AgentEvent,
+  type DirectAction,
   type DispatchApi,
   type DispatchConfig,
   type DispatchSource,
@@ -11,6 +12,7 @@ import {
 
 const api: DispatchApi = {
   send: (text: string, source?: DispatchSource) => ipcRenderer.send(IPC.send, text, source),
+  runDirect: (action: DirectAction) => ipcRenderer.send(IPC.runDirect, action),
   interrupt: () => ipcRenderer.send(IPC.interrupt),
   cancelLast: () => ipcRenderer.send(IPC.cancelLast),
   onAgentEvent: (cb: (e: AgentEvent) => void) => {

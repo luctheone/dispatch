@@ -155,7 +155,14 @@ export default function App() {
   }, [])
 
   function onDispatcherTool(name: string, args: Record<string, unknown>) {
-    if (name === "dispatch_task") {
+    if (name === "open_app") {
+      // Fast lane: no agent round-trip.
+      const appName = String(args.name ?? "").trim()
+      if (appName) window.dispatch.runDirect({ kind: "open_app", value: appName })
+    } else if (name === "open_url") {
+      const url = String(args.url ?? "").trim()
+      if (url) window.dispatch.runDirect({ kind: "open_url", value: url })
+    } else if (name === "dispatch_task") {
       const instruction = String(args.instruction ?? "").trim()
       if (typeof args.label === "string" && args.label.trim() && instruction) {
         pendingLabelsRef.current.push({ instruction, label: args.label.trim() })

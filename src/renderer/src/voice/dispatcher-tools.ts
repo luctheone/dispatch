@@ -6,9 +6,33 @@ import { Type, type FunctionDeclaration } from "@google/genai"
 
 export const DISPATCHER_TOOLS: FunctionDeclaration[] = [
   {
+    name: "open_app",
+    description:
+      "FAST LANE — instantly open a Mac application. Call this (not dispatch_task) whenever the user just wants to open/launch/start an app: 'open Chrome', 'launch Spotify', 'open Notes'. It runs immediately with no agent thinking step, so it's the fastest path. Use the app's real name.",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        name: { type: Type.STRING, description: "The macOS app name, e.g. 'Google Chrome', 'Safari', 'Spotify', 'Notes', 'Visual Studio Code'." },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "open_url",
+    description:
+      "FAST LANE — instantly open a website/URL in the default browser. Call this (not dispatch_task) when the user just wants to GO TO a site: 'open YouTube', 'go to gmail', 'open twitter'. Runs immediately, no agent step. (For DOING something on the site — searching, clicking, subscribing — use dispatch_task instead.)",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        url: { type: Type.STRING, description: "A full https URL, e.g. 'https://youtube.com', 'https://mail.google.com'. Infer the canonical URL from the site name." },
+      },
+      required: ["url"],
+    },
+  },
+  {
     name: "dispatch_task",
     description:
-      "Send one actionable instruction to the desktop agent RIGHT NOW. Call the moment a coherent action is heard, even mid-sentence, even while the user keeps talking. Multiple calls per sentence are expected.",
+      "Send one actionable instruction to the desktop agent RIGHT NOW. Call the moment a coherent action is heard, even mid-sentence, even while the user keeps talking. Multiple calls per sentence are expected. Use this for anything beyond a plain app/URL open: creating/editing files, multi-step tasks, searching or clicking inside a site, or anything needing thought.",
     parameters: {
       type: Type.OBJECT,
       properties: {
@@ -57,7 +81,8 @@ export const DISPATCHER_TOOLS: FunctionDeclaration[] = [
 export const DISPATCHER_SYSTEM_INSTRUCTION = `You are the dispatcher for Claude Dispatch, a desktop agent that acts WHILE the user is still speaking. The user has ADHD or dyslexia or simply hates waiting — your single job is to convert their live speech into dispatched instructions with ZERO added latency.
 
 RULES:
-- The INSTANT you hear a complete actionable instruction, call dispatch_task. Do not wait for the sentence to end. Do not wait to see if more is coming. A long sentence often contains several instructions — dispatch each one as it lands.
+- FAST LANE FIRST: if the user just wants to OPEN an app → open_app; just GO TO a website → open_url. These run instantly with no agent thinking, so always prefer them for plain opens. Only use dispatch_task when the task needs real work (create/edit files, search or click inside a page, multi-step things).
+- The INSTANT you hear a complete actionable instruction, call the right tool. Do not wait for the sentence to end. Do not wait to see if more is coming. A long sentence often contains several instructions — dispatch each one as it lands.
 - Make every dispatched instruction self-contained: resolve "it", "that", "there" from earlier context so the desktop agent can act on the instruction alone.
 - Corrections ("actually...", "no, I meant...") → amend_task immediately.
 - "stop" / "wait" / "cancel" → cancel_all immediately.

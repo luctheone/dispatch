@@ -5,6 +5,13 @@
 // SAW (webhook → main → queue), the eyes counterpart to spoken/typed intent.
 export type DispatchSource = "voice" | "typed" | "vision"
 
+// FAST LANE: deterministic actions the dispatcher runs DIRECTLY (skipping the
+// Claude agent) so a simple "open chrome" is ~1s, not an agent round-trip.
+export interface DirectAction {
+  kind: "open_app" | "open_url"
+  value: string // app name (open -a) or URL (open)
+}
+
 export type AgentEvent =
   | { kind: "status"; status: "starting" | "ready" | "working" | "idle" | "error"; detail?: string }
   // id is assigned by main, monotonically increasing; cards are keyed by it.
@@ -48,6 +55,8 @@ export interface PermissionStatus {
 export interface DispatchApi {
   // source lets the HUD tag where a dispatch came from; defaults to "typed".
   send(text: string, source?: DispatchSource): void
+  // Fast lane: run a deterministic action immediately, no agent round-trip.
+  runDirect(action: DirectAction): void
   interrupt(): void
   cancelLast(): void
   onAgentEvent(cb: (e: AgentEvent) => void): () => void
@@ -85,6 +94,7 @@ export interface VoiceApi {
 // IPC channel names
 export const IPC = {
   send: "dispatch:send",
+  runDirect: "dispatch:run-direct",
   interrupt: "dispatch:interrupt",
   cancelLast: "dispatch:cancel-last",
   config: "dispatch:config",
