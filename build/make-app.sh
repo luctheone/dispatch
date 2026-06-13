@@ -29,6 +29,18 @@ cp -RX "$APP_SRC" "$DEST/"
 echo "▸ ad-hoc signing inside-out…"
 bash build/sign-app.sh "$APP_DST"
 
+# Install to the standard /Applications (where users actually look). Signing had
+# to happen in ~/Applications (non-iCloud-synced), but the finished, signed app
+# copies cleanly to /Applications. Best-effort — falls back to ~/Applications if
+# /Applications isn't writable.
+FINAL="$APP_DST"
+if rm -rf "/Applications/Claude Dispatch.app" 2>/dev/null && cp -R "$APP_DST" /Applications/ 2>/dev/null; then
+  FINAL="/Applications/Claude Dispatch.app"
+  echo "▸ installed to /Applications"
+else
+  echo "  (couldn't write /Applications — left in ~/Applications)"
+fi
+
 echo ""
-echo "✓ Claude Dispatch.app ready at: $APP_DST"
-echo "  Launch it:  open \"$APP_DST\""
+echo "✓ Claude Dispatch.app ready at: $FINAL"
+echo "  Launch it:  open \"$FINAL\""

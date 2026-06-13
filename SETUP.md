@@ -127,8 +127,8 @@ instead of VS Code/Terminal.
 
 ```bash
 cd /Users/lucas/Documents/dispatch
-npm run make-app          # build → package → sign → ~/Applications/Claude Dispatch.app
-open ~/Applications/"Claude Dispatch.app"
+npm run make-app          # build → package → sign → installs to /Applications/Claude Dispatch.app
+open -a "Claude Dispatch"
 ```
 
 Rebuild any time with `npm run make-app`. (For fast UI iteration you can still

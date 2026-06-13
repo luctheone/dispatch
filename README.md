@@ -49,8 +49,8 @@ mic (16kHz PCM) ──► Gemini Live (speech-native dispatcher)
 cd dispatch
 npm install
 cp .env.example .env      # add GEMINI_API_KEY (voice) + optional sponsor keys
-npm run make-app          # build + sign → ~/Applications/Claude Dispatch.app
-open ~/Applications/"Claude Dispatch.app"
+npm run make-app          # build + sign → installs to /Applications/Claude Dispatch.app
+open -a "Claude Dispatch"
 ```
 
 You need: **Claude Code installed and logged in** (the agent rides that auth — no Anthropic key needed) and a **Gemini API key** for voice. First launch shows a permissions onboarding; the mic prompt is attributed to "Claude Dispatch". Full setup in [`SETUP.md`](SETUP.md).

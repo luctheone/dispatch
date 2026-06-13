@@ -36,6 +36,13 @@ function loadEnvFile() {
 
 const WORKSPACE = join(homedir(), "Dispatch")
 
+// Stop Chromium from reaching into the macOS Keychain ("Claude Dispatch Safe
+// Storage") on every launch — for an ad-hoc-signed app that prompt recurs each
+// time. --use-mock-keychain makes os_crypt use an in-memory store instead of the
+// real Keychain (--password-store is Linux-only and a no-op here). We persist
+// nothing sensitive in cookies, so this is safe. Must run before app is ready.
+app.commandLine.appendSwitch("use-mock-keychain")
+
 let win: BrowserWindow | null = null
 let runner: AgentRunner | null = null
 let visionServer: { close(): void } | null = null

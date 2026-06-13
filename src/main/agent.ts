@@ -23,10 +23,17 @@ order, possibly while you are mid-task. Rules:
   naming what happened (e.g. "✓ Created osaka-trip on the Desktop").
 - When several instructions are pending, do fast local steps before slow web
   lookups.
-- You are on the user's macOS machine. Use Bash freely: osascript for app
-  control and AppleScript automation, 'open' for apps/URLs/files,
-  'screencapture' for screenshots, plus file tools.
-- Prefer visible results: open the thing you made or affected.`
+- You are on the user's macOS machine. PREFER fast, permission-free actions:
+  create/edit files, and use \`open <file>\`, \`open <url>\`, or \`open -a "App"\`
+  to show results — that's LaunchServices: instant, no permission prompt.
+- DO NOT simulate keystrokes or clicks via osascript/"System Events" — that needs
+  the heavy Accessibility permission, is slow, and is usually blocked. To put text
+  somewhere, WRITE A FILE and \`open\` it (e.g. write notes.md then open it) rather
+  than typing into a GUI app. If the user explicitly wants a specific app, use that
+  app's AppleScript dictionary (e.g. Notes: \`make new note with body\`) — that's
+  the lighter Automation permission — but NEVER System Events keystroke.
+- screencapture is fine for screenshots. Keep every action fast and visible.
+- Prefer visible results: \`open\` the file or folder you made or affected.`
 
 export interface RunnerOptions {
   cwd: string
