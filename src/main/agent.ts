@@ -31,6 +31,11 @@ order, possibly while you are mid-task. Rules:
 export interface RunnerOptions {
   cwd: string
   model?: string
+  // Absolute path to the SDK's `claude` binary. Required in the packaged app:
+  // with asar enabled the SDK would resolve the binary to a path inside
+  // app.asar (a file, not a dir) and spawn fails with ENOTDIR, so main passes
+  // the asar.unpacked path. Undefined in dev → the SDK resolves it itself.
+  claudeExecutable?: string
   onEvent: (e: AgentEvent) => void
 }
 
@@ -250,6 +255,7 @@ export class AgentRunner {
         // Counts API round-trips CUMULATIVELY over this persistent session —
         // a 3pm rehearsal plus the live demo share the budget. Keep it high.
         maxTurns: 1000,
+        ...(this.opts.claudeExecutable ? { pathToClaudeCodeExecutable: this.opts.claudeExecutable } : {}),
         ...(hasMcp ? { mcpServers } : {}),
         ...(env ? { env } : {}),
       },

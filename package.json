@@ -16,14 +16,21 @@
   "build": {
     "appId": "com.dispatch.app",
     "productName": "Claude Dispatch",
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/@anthropic-ai/claude-agent-sdk-darwin-arm64/**"
+    ],
     "directories": {
       "output": "release"
     },
     "files": [
       "out/**",
       "node_modules/**",
-      "package.json"
+      "package.json",
+      "!node_modules/@google/genai/**",
+      "!node_modules/react/**",
+      "!node_modules/react-dom/**",
+      "!node_modules/scheduler/**"
     ],
     "mac": {
       "category": "public.app-category.utilities",

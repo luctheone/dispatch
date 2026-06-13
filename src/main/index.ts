@@ -62,6 +62,11 @@ function createWindow() {
     y: workArea.y + Math.max(12, Math.round((workArea.height - height) / 2)),
     alwaysOnTop: true,
     resizable: true,
+    // Don't paint a white frame before the dark UI is ready — and don't leave
+    // the window invisible if rendering stalls. Show on ready-to-show, with a
+    // hard fallback so it ALWAYS appears within 4s of launch (the "won't open"
+    // fix: never leave the user staring at a bouncing dock with no window).
+    show: false,
     title: "Claude Dispatch",
     backgroundColor: "#0a0a0c",
     titleBarStyle: "hiddenInset",
@@ -71,6 +76,15 @@ function createWindow() {
       sandbox: false,
     },
   })
+
+  const reveal = () => {
+    if (!win || win.isDestroyed() || win.isVisible()) return
+    win.show()
+    win.focus()
+    if (process.platform === "darwin") app.dock?.show()
+  }
+  win.once("ready-to-show", reveal)
+  setTimeout(reveal, 4000)
 
   // External links open in the real browser, not inside the HUD.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -128,6 +142,38 @@ async function checkVideoDb(): Promise<PreflightResult["videodb"]> {
   }
 }
 
+// Single-instance: a second launch (e.g. impatient double-clicks during a slow
+// first launch) just focuses the existing window instead of spawning a rival
+// process that fights over the vision port.
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+} else {
+  app.on("second-instance", () => {
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.show()
+      win.focus()
+    }
+  })
+}
+
+// In the packaged app (asar enabled) the SDK can't resolve its own native
+// binary from inside app.asar, so point it at the asar.unpacked copy. The
+// platform package is sometimes hoisted to top-level node_modules and sometimes
+// nested under the SDK package, so check both layouts.
+function resolveClaudeExecutable(): string | undefined {
+  if (!app.isPackaged) return undefined
+  const unpacked = app.getAppPath().replace(/app\.asar$/, "app.asar.unpacked")
+  const bin = "node_modules/@anthropic-ai/claude-agent-sdk-darwin-arm64/claude"
+  const candidates = [
+    join(unpacked, bin),
+    join(unpacked, "node_modules/@anthropic-ai/claude-agent-sdk", bin),
+  ]
+  for (const p of candidates) if (existsSync(p)) return p
+  console.error("[dispatch] WARNING: could not locate the unpacked claude binary under", unpacked)
+  return undefined
+}
+
 app.whenReady().then(async () => {
   loadEnvFile()
   mkdirSync(WORKSPACE, { recursive: true })
@@ -139,6 +185,7 @@ app.whenReady().then(async () => {
   runner = new AgentRunner({
     cwd: WORKSPACE,
     model: process.env.DISPATCH_MODEL || undefined,
+    claudeExecutable: resolveClaudeExecutable(),
     onEvent: (e) => {
       if (e.kind === "status") {
         lastStatus = e.status
